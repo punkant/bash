@@ -1,26 +1,26 @@
 #!/bin/bash
 filename=$2
 function init {
-	echo "init"
-	if [ -r $filename ];then
+	echo "init:"
+	if [ -r ./$filename ];then
 		echo "file availible"
-		if [ ! -e .$filename ];then
+		if [ ! -e ./"."$filename ];then
 			echo "creating repositry directory"
 			mkdir .$filename
 			echo "creating zero version"
-			echo "0" >  ".$filename/count"
-			touch ".$filename/headRevision"
+			echo "-1" >  ./"."$filename/count
+			touch ./"."$filename/headRevision
 		else
 			echo "directory already exist, you may have already save version of this file?"
 			echo "do you want reinitialized this directory(yes/no)?"
 			read answer
 			if [[ "y" = "$answer" || "yes" = "$answer" ]];then
 				echo "creating repositry directory"
-				rm -rf .$filename
-				mkdir .$filename
+				rm -rf ./"."$filename
+				mkdir ./"."$filename
 				echo "creating zero version"
-				echo "0" >  ".$filename/count"
-				touch ".$filename/headRevision"
+				echo "-1" >  ./"."$filename/count
+				touch ./"."$filename/headRevision
 			fi
 		
 		fi
@@ -29,15 +29,16 @@ function init {
 	fi
 }
 function commit {
-	echo "commit"
-	if [ -r $filename ];then
-		if [ -r .$filename ];then
+	echo "commit:"
+	if [ -r ./"."$filename ];then
+		if [ -r ./"."$filename ];then
 			number=$[ $[ ` cat .$filename/count` ] + 1]
 			#echo "$number"
-			diff -u "$filename" ".$filename/headRevision" > ".$filename/revision_$number"
+			touch ./"."$filename/$filename"Temp"
+			diff -u ./"."$filename/$filename"Temp" ./$filename > ./"."$filename/"revision_"$number
+			rm -rf ./"."$filename/$filename"Temp"
 			cp "$filename" ".$filename/headRevision"
-			number=$[$number]
-			echo "$number" > ".$filename/count"  
+			echo "$number" > ".$filename/count"
 		else
 			echo "directory is not exist,maybe you don't initialised you repositry"
 		fi
@@ -47,7 +48,7 @@ function commit {
 		
 }
 function stat {
-	echo "status"
+	echo "status:"
 	if [ -r $filename ];then
 		diff -u "$filename" ".$filename/headRevision" > /dev/null
 		if [ "$?" != "0" ];then
@@ -61,16 +62,31 @@ function stat {
 	fi
 		
 }
+function _diff {
+	if [ -r ./"."$filename ];then
+		if [ -r ./"."$filename ];then
+			diff -u ./$filename ./"."$filename/headRevision
+		else
+			echo "there is no repository with this file,maybe you should commit it"
+		fi
+	else
+		echo "file unavailible"
+	fi
+}
 function update {
 	revisionNumber=$2
 	if [ -r $filename ];then
 		number=$[ ` cat .$filename/count` ]
-		i=$number
-		for i in `seq $number -1 $revisionNumber`
-		do
-			patch "$filename" ".$fiename/revision_$number"
-			i=[$i - 1]
-		done
+		if [[ "$number" > "$revisionNumber" ]];then
+			touch ./"."$filename/$filename"Temp"
+			patch ./"."$filename/$filename"Temp" ./"."$filename/"revision_"$revisionNumber
+			cp ./"."$filename/$filename"Temp" ./$filename
+			rm -rf ./"."$filename/$filename"Temp"
+			touch ./"."$filename/"update_number"
+			echo "$revisionNumber">"update_number"
+		else
+			echo "there is no revision with number "$revisionNumber
+		fi
 	else
 		echo "file not found"
 	fi
